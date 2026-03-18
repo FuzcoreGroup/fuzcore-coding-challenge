@@ -26,12 +26,16 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/challenge
       NODE_ENV: development
       PORT: 5000
+      JWT_SECRET: dev-change-me
+      JWT_EXPIRES_IN: 7d
     ports:
-      - "5000:5000"
+      - "5001:5000"
     depends_on:
       db:
         condition: service_healthy
-    command: sh -c "npm run db:push && npm run dev"
+    # `node_modules` is mounted as a named volume in dev. If dependencies change,
+    # we need to ensure the mounted volume has the latest packages.
+    command: sh -c "npm ci && npm run db:push && npm run dev"
 
 volumes:
   pgdata:

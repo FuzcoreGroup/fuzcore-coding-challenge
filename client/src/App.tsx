@@ -1,43 +1,117 @@
-import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import React, { useEffect } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Route, Router, useLocation } from "wouter";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import AuthedLayout from "@/components/AuthedLayout";
+import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
+import DashboardPage from "@/pages/DashboardPage";
+import CustomersPage from "@/pages/CustomersPage";
+import TransactionsPage from "@/pages/TransactionsPage";
+import InvoicesPage from "@/pages/InvoicesPage";
+import InvoiceDetailPage from "@/pages/InvoiceDetailPage";
+import ReportsPage from "@/pages/ReportsPage";
+import HireBookkeeperPage from "@/pages/HireBookkeeperPage";
 
 const queryClient = new QueryClient();
 
-function CounterPage() {
-  const qc = useQueryClient();
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+  const [, setLocation] = useLocation();
 
-  const { data, isLoading } = useQuery<{ count: number }>({
-    queryKey: ["/api/counter"],
-    queryFn: () => fetch("/api/counter").then((r) => r.json()),
-  });
+  useEffect(() => {
+    if (auth.status === "unauthenticated") setLocation("/login");
+  }, [auth.status, setLocation]);
 
-  const increment = useMutation({
-    mutationFn: () =>
-      fetch("/api/counter/increment", { method: "POST" }).then((r) => r.json()),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/counter"] }),
-  });
+  if (auth.status === "loading") {
+    return <div className="p-6">Loading...</div>;
+  }
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-6">
-      <h1 className="text-4xl font-bold">Counter</h1>
-      <p className="text-6xl font-mono">
-        {isLoading ? "…" : data?.count ?? 0}
-      </p>
-      <Button
-        onClick={() => increment.mutate()}
-        disabled={increment.isPending}
-        size="lg"
-      >
-        Increment
-      </Button>
-    </div>
-  );
+  if (auth.status === "unauthenticated") {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+
+function HomeRoute() {
+  const auth = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (auth.status === "authenticated") setLocation("/dashboard");
+    if (auth.status === "unauthenticated") setLocation("/login");
+  }, [auth.status, setLocation]);
+
+  return <div className="p-6">Redirecting...</div>;
 }
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <CounterPage />
+      <AuthProvider>
+        <Router>
+          <Route path="/">
+            <HomeRoute />
+          </Route>
+          <Route path="/login">
+            <LoginPage />
+          </Route>
+          <Route path="/register">
+            <RegisterPage />
+          </Route>
+
+          <Route path="/dashboard">
+            <RequireAuth>
+              <AuthedLayout>
+                <DashboardPage />
+              </AuthedLayout>
+            </RequireAuth>
+          </Route>
+          <Route path="/customers">
+            <RequireAuth>
+              <AuthedLayout>
+                <CustomersPage />
+              </AuthedLayout>
+            </RequireAuth>
+          </Route>
+          <Route path="/transactions">
+            <RequireAuth>
+              <AuthedLayout>
+                <TransactionsPage />
+              </AuthedLayout>
+            </RequireAuth>
+          </Route>
+          <Route path="/invoices/:id">
+            <RequireAuth>
+              <AuthedLayout>
+                <InvoiceDetailPage />
+              </AuthedLayout>
+            </RequireAuth>
+          </Route>
+          <Route path="/invoices">
+            <RequireAuth>
+              <AuthedLayout>
+                <InvoicesPage />
+              </AuthedLayout>
+            </RequireAuth>
+          </Route>
+          <Route path="/reports">
+            <RequireAuth>
+              <AuthedLayout>
+                <ReportsPage />
+              </AuthedLayout>
+            </RequireAuth>
+          </Route>
+          <Route path="/hire">
+            <RequireAuth>
+              <AuthedLayout>
+                <HireBookkeeperPage />
+              </AuthedLayout>
+            </RequireAuth>
+          </Route>
+        </Router>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

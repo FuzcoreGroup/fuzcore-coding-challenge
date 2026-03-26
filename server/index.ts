@@ -1,5 +1,7 @@
+import "./config";
+import { serverConfig } from "./config";
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes/index";
 import { createServer } from "http";
 
 const app = express();
@@ -56,7 +58,7 @@ app.use((req, res, next) => {
     return res.status(status).json({ message });
   });
 
-  if (process.env.NODE_ENV === "production") {
+  if (serverConfig.NODE_ENV === "production") {
     const { serveStatic } = await import("./static");
     serveStatic(app);
   } else {
@@ -64,7 +66,7 @@ app.use((req, res, next) => {
     await setupVite(httpServer, app);
   }
 
-  const port = parseInt(process.env.PORT || "5000", 10);
+  const port = serverConfig.PORT;
   httpServer.listen(
     {
       port,

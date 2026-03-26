@@ -8,13 +8,26 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
+# # --- Dev image (used by docker-compose for local development) ---
+# FROM node:22-alpine AS dev
+
+# WORKDIR /app
+
+# COPY package*.json ./
+# RUN npm ci
+
+# EXPOSE 5000
+
+# CMD ["npm", "run", "dev"]
 # --- Dev image (used by docker-compose for local development) ---
 FROM node:22-alpine AS dev
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+
+# Explicitly install everything for development
+RUN npm ci --include=dev
 
 EXPOSE 5000
 
@@ -28,7 +41,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+# RUN npm ci --omit=dev
+RUN npm install
 
 COPY --from=builder /app/dist ./dist
 

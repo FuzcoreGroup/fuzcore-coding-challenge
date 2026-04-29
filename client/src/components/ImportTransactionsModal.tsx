@@ -116,6 +116,8 @@ export function ImportTransactionsModal({ isOpen, onClose }: ImportTransactionsM
             successCount++;
           } catch (e) {
             console.error('Import row failed', e);
+
+            
           }
         }
         showToast(`Imported ${successCount} transactions`, 'success');

@@ -1,22 +1,13 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 export type TransactionType = 'income' | 'expense';
-export type TransactionCategory =
-  | 'Salary'
-  | 'Freelance'
-  | 'Investment'
-  | 'Shopping'
-  | 'Food'
-  | 'Transport'
-  | 'Entertainment'
-  | 'Bills'
-  | 'Other';
 
 export interface Transaction {
   id: string;
   amount: number;
   type: TransactionType;
-  category: TransactionCategory;
+  categoryId: string;
   description: string;
   date: string;
   createdAt: string;
@@ -25,121 +16,137 @@ export interface Transaction {
 interface TransactionContextType {
   transactions: Transaction[];
   loading: boolean;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
-  updateTransaction: (id: string, transaction: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
+  addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
+  updateTransaction: (id: string, tx: Partial<Omit<Transaction, 'id' | 'createdAt'>>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
-  getTransaction: (id: string) => Transaction | undefined;
+  refreshTransactions: () => Promise<void>;
 }
 
 const TransactionContext = createContext<TransactionContextType | null>(null);
 
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    id: '1',
-    amount: 5000,
-    type: 'income',
-    category: 'Salary',
-    description: 'Monthly salary payment',
-    date: '2024-01-28',
-    createdAt: '2024-01-28',
-  },
-  {
-    id: '2',
-    amount: 750,
-    type: 'income',
-    category: 'Freelance',
-    description: 'Client project payment',
-    date: '2024-01-25',
-    createdAt: '2024-01-25',
-  },
-  {
-    id: '3',
-    amount: 25,
-    type: 'expense',
-    category: 'Entertainment',
-    description: 'Spotify subscription',
-    date: '2024-01-28',
-    createdAt: '2024-01-28',
-  },
-  {
-    id: '4',
-    amount: 150,
-    type: 'expense',
-    category: 'Bills',
-    description: 'Mobile service',
-    date: '2024-01-20',
-    createdAt: '2024-01-20',
-  },
-  {
-    id: '5',
-    amount: 85,
-    type: 'expense',
-    category: 'Food',
-    description: 'Grocery shopping',
-    date: '2024-01-18',
-    createdAt: '2024-01-18',
-  },
-  {
-    id: '6',
-    amount: 340,
-    type: 'expense',
-    category: 'Shopping',
-    description: 'Amazon purchase',
-    date: '2024-01-14',
-    createdAt: '2024-01-14',
-  },
-];
-
 export function TransactionProvider({ children }: { children: ReactNode }) {
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const stored = localStorage.getItem('transactions');
-    return stored ? JSON.parse(stored) : MOCK_TRANSACTIONS;
-  });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
+  const { token } = useAuth();
 
-  useEffect(() => {
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-  }, [transactions]);
+  const API_BASE = '/api/transactions';
 
-  const addTransaction = async (transactionData: Omit<Transaction, 'id' | 'createdAt'>) => {
+  const fetchTransactions = async () => {
+    if (!token) return;
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const newTransaction: Transaction = {
-      ...transactionData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-
-    setTransactions(prev => [newTransaction, ...prev]);
-    setLoading(false);
+    try {
+      const res = await fetch(API_BASE, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Invalid response: ${text.substring(0, 200)}`);
+      }
+      if (!res.ok) throw new Error(data.message || 'Failed to fetch');
+      
+      // Normalize amounts to numbers
+      const normalized = data.map((tx: any) => ({
+        ...tx,
+        amount: typeof tx.amount === 'string' ? parseFloat(tx.amount) : tx.amount,
+      }));
+      const sorted = normalized.sort((a: Transaction, b: Transaction) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      setTransactions(sorted);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateTransaction = async (id: string, transactionData: Omit<Transaction, 'id' | 'createdAt'>) => {
-    setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+  useEffect(() => {
+    if (token) fetchTransactions();
+  }, [token]);
 
-    setTransactions(prev =>
-      prev.map(transaction =>
-        transaction.id === id
-          ? { ...transaction, ...transactionData }
-          : transaction
-      )
-    );
-    setLoading(false);
+  const addTransaction = async (txData: Omit<Transaction, 'id' | 'createdAt'>) => {
+    setLoading(true);
+    try {
+      const res = await fetch(API_BASE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(txData),
+      });
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Invalid response: ${text.substring(0, 200)}`);
+      }
+      if (!res.ok) throw new Error(data.message || 'Failed to add transaction');
+      const newTx = { ...data, amount: typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount };
+      setTransactions(prev => [newTx, ...prev]);
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateTransaction = async (id: string, txData: Partial<Omit<Transaction, 'id' | 'createdAt'>>) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(txData),
+      });
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Invalid response: ${text.substring(0, 200)}`);
+      }
+      if (!res.ok) throw new Error(data.message || 'Failed to update transaction');
+      const updated = { ...data, amount: typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount };
+      setTransactions(prev => prev.map(tx => tx.id === id ? { ...tx, ...updated } : tx));
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deleteTransaction = async (id: string) => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    setTransactions(prev => prev.filter(transaction => transaction.id !== id));
-    setLoading(false);
+    try {
+      const res = await fetch(`${API_BASE}/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Invalid response: ${text.substring(0, 200)}`);
+      }
+      if (!res.ok) throw new Error(data.message || 'Failed to delete transaction');
+      setTransactions(prev => prev.filter(tx => tx.id !== id));
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getTransaction = (id: string) => {
-    return transactions.find(transaction => transaction.id === id);
-  };
+  const refreshTransactions = () => fetchTransactions();
 
   return (
     <TransactionContext.Provider
@@ -149,7 +156,7 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         addTransaction,
         updateTransaction,
         deleteTransaction,
-        getTransaction,
+        refreshTransactions,
       }}
     >
       {children}
@@ -158,9 +165,7 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
 }
 
 export function useTransactions() {
-  const context = useContext(TransactionContext);
-  if (!context) {
-    throw new Error('useTransactions must be used within TransactionProvider');
-  }
-  return context;
+  const ctx = useContext(TransactionContext);
+  if (!ctx) throw new Error('useTransactions must be used within TransactionProvider');
+  return ctx;
 }

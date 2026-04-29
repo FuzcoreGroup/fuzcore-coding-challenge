@@ -1,4 +1,6 @@
+// client/src/contexts/CategoryContext.tsx
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 export type CategoryType = 'income' | 'expense';
 
@@ -6,84 +8,129 @@ export interface Category {
   id: string;
   name: string;
   type: CategoryType;
-  isDefault: boolean;
+  description?: string | null;
+  color?: string;
+  icon?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 interface CategoryContextType {
   categories: Category[];
   loading: boolean;
-  addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'isDefault'>) => Promise<void>;
-  updateCategory: (id: string, category: Omit<Category, 'id' | 'createdAt' | 'isDefault'>) => Promise<void>;
+  addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateCategory: (id: string, category: Partial<Omit<Category, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   getCategory: (id: string) => Category | undefined;
+  refreshCategories: () => Promise<void>;
 }
 
 const CategoryContext = createContext<CategoryContextType | null>(null);
 
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: '1', name: 'Salary', type: 'income', isDefault: true, createdAt: '2026-01-01' },
-  { id: '2', name: 'Freelance', type: 'income', isDefault: true, createdAt: '2026-01-01' },
-  { id: '3', name: 'Investment', type: 'income', isDefault: true, createdAt: '2026-01-01' },
-  { id: '4', name: 'Shopping', type: 'expense', isDefault: true, createdAt: '2026-01-01' },
-  { id: '5', name: 'Food', type: 'expense', isDefault: true, createdAt: '2026-01-01' },
-  { id: '6', name: 'Transport', type: 'expense', isDefault: true, createdAt: '2026-01-01' },
-  { id: '7', name: 'Entertainment', type: 'expense', isDefault: true, createdAt: '2026-01-01' },
-  { id: '8', name: 'Bills', type: 'expense', isDefault: true, createdAt: '2026-01-01' },
-  { id: '9', name: 'Other', type: 'expense', isDefault: true, createdAt: '2026-01-01' },
-];
-
 export function CategoryProvider({ children }: { children: ReactNode }) {
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const stored = localStorage.getItem('categories');
-    return stored ? JSON.parse(stored) : DEFAULT_CATEGORIES;
-  });
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const { token } = useAuth();
 
-  useEffect(() => {
-    localStorage.setItem('categories', JSON.stringify(categories));
-  }, [categories]);
+  const API_BASE = '/api/categories';
 
-  const addCategory = async (categoryData: Omit<Category, 'id' | 'createdAt' | 'isDefault'>) => {
+  const fetchCategories = async () => {
+    if (!token) return;
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const newCategory: Category = {
-      ...categoryData,
-      id: Date.now().toString(),
-      isDefault: false,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-
-    setCategories(prev => [newCategory, ...prev]);
-    setLoading(false);
+    try {
+      const res = await fetch(API_BASE, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch categories');
+      const data = await res.json();
+      // Sort newest first (newest createdAt on top)
+      const sorted = [...data].sort((a: Category, b: Category) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setCategories(sorted);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateCategory = async (id: string, categoryData: Omit<Category, 'id' | 'createdAt' | 'isDefault'>) => {
-    setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+  useEffect(() => {
+    if (token) fetchCategories();
+  }, [token]);
 
-    setCategories(prev =>
-      prev.map(category =>
-        category.id === id
-          ? { ...category, ...categoryData }
-          : category
-      )
-    );
-    setLoading(false);
+  const addCategory = async (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
+    setLoading(true);
+    try {
+      const res = await fetch(API_BASE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(categoryData),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to add category');
+      }
+      const newCategory = await res.json();
+      // Prepend to show newest at top
+      setCategories(prev => [newCategory, ...prev]);
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateCategory = async (id: string, categoryData: Partial<Omit<Category, 'id' | 'createdAt' | 'updatedAt'>>) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(categoryData),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to update category');
+      }
+      const updated = await res.json();
+      setCategories(prev =>
+        prev.map(cat => (cat.id === id ? { ...cat, ...updated } : cat))
+      );
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deleteCategory = async (id: string) => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    setCategories(prev => prev.filter(category => category.id !== id));
-    setLoading(false);
+    try {
+      const res = await fetch(`${API_BASE}/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to delete category');
+      }
+      setCategories(prev => prev.filter(cat => cat.id !== id));
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getCategory = (id: string) => {
-    return categories.find(category => category.id === id);
-  };
+  const getCategory = (id: string) => categories.find(cat => cat.id === id);
+  const refreshCategories = () => fetchCategories();
 
   return (
     <CategoryContext.Provider
@@ -94,6 +141,7 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
         updateCategory,
         deleteCategory,
         getCategory,
+        refreshCategories,
       }}
     >
       {children}
@@ -103,8 +151,6 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
 
 export function useCategories() {
   const context = useContext(CategoryContext);
-  if (!context) {
-    throw new Error('useCategories must be used within CategoryProvider');
-  }
+  if (!context) throw new Error('useCategories must be used within CategoryProvider');
   return context;
 }

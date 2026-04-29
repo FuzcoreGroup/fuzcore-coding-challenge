@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -6,34 +6,53 @@ import { useToast } from '@/contexts/ToastContext';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
+    setErrors({});
 
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
-
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     try {
       await login(email, password);
-      showToast('Login successful', 'success');
+      showToast('Login successful! Welcome back!', 'success');
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to login');
-      showToast(err instanceof Error ? err.message : 'Failed to login', 'error');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to login';
+      setErrors({ general: errorMessage });
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -59,13 +78,20 @@ export default function Login() {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email) setErrors({ ...errors, email: undefined });
+              }}
               className={`w-full h-[50px] px-4 rounded-[15px] border ${
-                error && !email ? 'border-[#fe5c73]' : 'border-[#dfeaf2]'
+                errors.email ? 'border-[#fe5c73]' : 'border-[#dfeaf2]'
               } bg-[#f5f7fa] text-[#343c6a] text-[15px] outline-none focus:border-[#2d60ff] transition-colors`}
               placeholder="Enter your email"
               disabled={loading}
+              autoComplete="email"
             />
+            {errors.email && (
+              <p className="mt-1 text-[#fe5c73] text-[12px]">{errors.email}</p>
+            )}
           </div>
 
           <div>
@@ -76,18 +102,25 @@ export default function Login() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errors.password) setErrors({ ...errors, password: undefined });
+              }}
               className={`w-full h-[50px] px-4 rounded-[15px] border ${
-                error && !password ? 'border-[#fe5c73]' : 'border-[#dfeaf2]'
+                errors.password ? 'border-[#fe5c73]' : 'border-[#dfeaf2]'
               } bg-[#f5f7fa] text-[#343c6a] text-[15px] outline-none focus:border-[#2d60ff] transition-colors`}
               placeholder="Enter your password"
               disabled={loading}
+              autoComplete="current-password"
             />
+            {errors.password && (
+              <p className="mt-1 text-[#fe5c73] text-[12px]">{errors.password}</p>
+            )}
           </div>
 
-          {error && (
+          {errors.general && (
             <div className="bg-[#ffe0eb] border border-[#fe5c73] rounded-[15px] p-4 text-[#fe5c73] text-[14px]">
-              {error}
+              {errors.general}
             </div>
           )}
 
@@ -96,7 +129,14 @@ export default function Login() {
             disabled={loading}
             className="w-full h-[50px] bg-[#1814f3] text-white font-medium text-[16px] rounded-[15px] hover:bg-[#2d60ff] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Signing in...</span>
+              </div>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
@@ -106,12 +146,6 @@ export default function Login() {
             <Link to="/signup" className="text-[#2d60ff] font-medium hover:underline">
               Sign up
             </Link>
-          </p>
-        </div>
-
-        <div className="mt-8 pt-6 border-t border-[#e6eff5] text-center">
-          <p className="text-[#8ba3cb] text-[13px]">
-            Demo credentials: any email with password (min 6 chars)
           </p>
         </div>
       </div>

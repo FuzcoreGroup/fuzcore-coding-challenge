@@ -1,9 +1,10 @@
+// client/src/pages/categories/Categories.tsx
 import { useState } from 'react';
-import { AppLayout } from '@/components/AppLayout';
-import { useCategories, Category, CategoryType } from '@/contexts/CategoryContext';
-import { AddEditCategoryModal } from '@/components/AddEditCategoryModal';
-import { DeleteCategoryModal } from '@/components/DeleteCategoryModal';
-import { useToast } from '@/contexts/ToastContext';
+import { AppLayout } from '../../components/AppLayout';
+import { useCategories, Category, CategoryType } from '../../contexts/CategoryContext';
+import { AddEditCategoryModal } from '../../components/AddEditCategoryModal';
+import { DeleteCategoryModal } from '../../components/DeleteCategoryModal';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function Categories() {
   const { categories, loading, deleteCategory } = useCategories();
@@ -19,19 +20,11 @@ export default function Categories() {
   };
 
   const handleEditCategory = (category: Category) => {
-    if (category.isDefault) {
-      showToast('Default categories cannot be edited', 'error');
-      return;
-    }
     setSelectedCategory(category);
     setIsAddEditModalOpen(true);
   };
 
   const handleDeleteClick = (category: Category) => {
-    if (category.isDefault) {
-      showToast('Default categories cannot be deleted', 'error');
-      return;
-    }
     setSelectedCategory(category);
     setIsDeleteModalOpen(true);
   };
@@ -43,9 +36,8 @@ export default function Categories() {
         showToast('Category deleted successfully', 'success');
         setIsDeleteModalOpen(false);
         setSelectedCategory(null);
-      } catch (error) {
-        console.error('Failed to delete category:', error);
-        showToast('Failed to delete category', 'error');
+      } catch (error: any) {
+        showToast(error.message || 'Failed to delete category', 'error');
       }
     }
   };
@@ -61,6 +53,7 @@ export default function Categories() {
   return (
     <AppLayout title="Categories">
       <div className="space-y-6">
+        {/* Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-[25px] p-6 shadow-sm">
             <p className="text-[14px] text-[#718ebf] mb-2">Total Categories</p>
@@ -87,6 +80,7 @@ export default function Categories() {
             </button>
           </div>
 
+          {/* Filter Buttons */}
           <div className="mb-6">
             <label className="block text-[12px] text-[#718ebf] mb-2">Filter by Type</label>
             <div className="flex gap-2">
@@ -123,6 +117,7 @@ export default function Categories() {
             </div>
           </div>
 
+          {/* Loading & Empty States */}
           {loading && categories.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="w-[60px] h-[60px] rounded-full border-4 border-[#e6eff5] border-t-[#2d60ff] animate-spin mb-4" />
@@ -150,6 +145,7 @@ export default function Categories() {
               )}
             </div>
           ) : (
+            /* Category Cards Grid */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredCategories.map((category) => (
                 <div
@@ -199,21 +195,12 @@ export default function Categories() {
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t border-[#f3f3f5]">
-                    {category.isDefault ? (
-                      <span className="text-[12px] text-[#718ebf] italic">Default category</span>
-                    ) : (
-                      <span className="text-[12px] text-[#718ebf]">Custom</span>
-                    )}
+                    <span className="text-[12px] text-[#718ebf]">Custom</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEditCategory(category)}
-                        className={`w-[32px] h-[32px] rounded-[8px] flex items-center justify-center transition-colors ${
-                          category.isDefault
-                            ? 'bg-[#f3f3f5] text-[#8ba3cb] cursor-not-allowed'
-                            : 'bg-[#e7edff] hover:bg-[#2d60ff] text-[#2d60ff] hover:text-white'
-                        }`}
-                        title={category.isDefault ? 'Cannot edit default category' : 'Edit category'}
-                        disabled={category.isDefault}
+                        className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center transition-colors bg-[#e7edff] hover:bg-[#2d60ff] text-[#2d60ff] hover:text-white"
+                        title="Edit category"
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                           <path
@@ -227,13 +214,8 @@ export default function Categories() {
                       </button>
                       <button
                         onClick={() => handleDeleteClick(category)}
-                        className={`w-[32px] h-[32px] rounded-[8px] flex items-center justify-center transition-colors ${
-                          category.isDefault
-                            ? 'bg-[#f3f3f5] text-[#8ba3cb] cursor-not-allowed'
-                            : 'bg-[#ffe0eb] hover:bg-[#fe5c73] text-[#fe5c73] hover:text-white'
-                        }`}
-                        title={category.isDefault ? 'Cannot delete default category' : 'Delete category'}
-                        disabled={category.isDefault}
+                        className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center transition-colors bg-[#ffe0eb] hover:bg-[#fe5c73] text-[#fe5c73] hover:text-white"
+                        title="Delete category"
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                           <path
@@ -254,6 +236,7 @@ export default function Categories() {
         </div>
       </div>
 
+      {/* Modals */}
       <AddEditCategoryModal
         isOpen={isAddEditModalOpen}
         onClose={() => {

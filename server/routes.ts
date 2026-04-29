@@ -1,36 +1,39 @@
 import type { Express } from "express";
 import type { Server } from "http";
-import { db } from "./db";
-import { counter } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import authRoutes from "./routes/auth.routes.js";
+import categoryRoutes from "./routes/category.routes.js";
+import transactionRoutes from "./routes/transaction.routes.js";
 
 export async function registerRoutes(httpServer: Server, app: Express) {
-  app.get("/api/counter", async (_req, res) => {
-    const rows = await db.select().from(counter).where(eq(counter.id, 1));
-    if (rows.length === 0) {
-      const inserted = await db
-        .insert(counter)
-        .values({ id: 1, count: 0 })
-        .returning();
-      return res.json({ count: inserted[0].count });
-    }
-    return res.json({ count: rows[0].count });
+  // Health check endpoint
+  app.get("/api/health", (_req, res) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      message: "Server is running"
+    });
   });
 
-  app.post("/api/counter/increment", async (_req, res) => {
-    const rows = await db.select().from(counter).where(eq(counter.id, 1));
-    if (rows.length === 0) {
-      const inserted = await db
-        .insert(counter)
-        .values({ id: 1, count: 1 })
-        .returning();
-      return res.json({ count: inserted[0].count });
+  // Register authentication routes
+  app.use("/api/auth", authRoutes);
+  
+  // Register category routes (protected)
+  app.use("/api/categories", categoryRoutes);
+
+  // Register transaction routes (protected)
+  app.use("/api/transactions", transactionRoutes);
+
+  // TODO: Add more routes as you create them:
+  // app.use("/api/customers", customerRoutes);
+  
+  // app.use("/api/invoices", invoiceRoutes);
+  // app.use("/api/dashboard", dashboardRoutes);
+
+  // 404 handler for API routes - FIXED: removed the invalid wildcard
+  app.use((req, res) => {
+    if (req.path.startsWith('/api')) {
+      res.status(404).json({ message: `API endpoint not found: ${req.method} ${req.path}` });
     }
-    const updated = await db
-      .update(counter)
-      .set({ count: rows[0].count + 1 })
-      .where(eq(counter.id, 1))
-      .returning();
-    return res.json({ count: updated[0].count });
+    // Let other routes (like Vite) handle non-API requests
   });
 }

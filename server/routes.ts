@@ -3,6 +3,8 @@ import type { Server } from "http";
 import authRoutes from "./routes/auth.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import transactionRoutes from "./routes/transaction.routes.js";
+import customerRoutes from "./routes/customer.routes.js"; 
+import invoiceRoutes from "./routes/invoice.routes.js"
 
 export async function registerRoutes(httpServer: Server, app: Express) {
   // Health check endpoint
@@ -23,10 +25,12 @@ export async function registerRoutes(httpServer: Server, app: Express) {
   // Register transaction routes (protected)
   app.use("/api/transactions", transactionRoutes);
 
-  // TODO: Add more routes as you create them:
-  // app.use("/api/customers", customerRoutes);
-  
-  // app.use("/api/invoices", invoiceRoutes);
+  // Register customer routes (protected)
+   app.use("/api/customers", customerRoutes);  
+
+  // Register invoices routes (protected)
+  app.use("/api/invoices", invoiceRoutes);
+
   // app.use("/api/dashboard", dashboardRoutes);
 
   // 404 handler for API routes - FIXED: removed the invalid wildcard

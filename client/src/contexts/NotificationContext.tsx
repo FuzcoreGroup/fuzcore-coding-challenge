@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 
 export type NotificationType = 'invoice' | 'customer' | 'transaction' | 'category' | 'general';
 
@@ -7,7 +7,7 @@ export interface Notification {
   type: NotificationType;
   title: string;
   message: string;
-  timestamp: Date;
+  timestamp: Date;        // stored as Date object in memory, but serialized as ISO string in localStorage
   read: boolean;
 }
 
@@ -23,17 +23,44 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
 
+const STORAGE_KEY = 'notifications';
+
+// Helper to load notifications from localStorage
+const loadNotifications = (): Notification[] => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) return [];
+  try {
+    const parsed = JSON.parse(stored);
+    // Convert timestamp strings back to Date objects
+    return parsed.map((n: any) => ({
+      ...n,
+      timestamp: new Date(n.timestamp),
+    }));
+  } catch {
+    return [];
+  }
+};
+
+// Helper to save notifications to localStorage
+const saveNotifications = (notifications: Notification[]) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
+};
+
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>(loadNotifications);
+
+  // Persist whenever notifications change
+  useEffect(() => {
+    saveNotifications(notifications);
+  }, [notifications]);
 
   const addNotification = useCallback((notificationData: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
       ...notificationData,
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       timestamp: new Date(),
       read: false,
     };
-
     setNotifications(prev => [newNotification, ...prev]);
   }, []);
 

@@ -9,6 +9,8 @@ import fs from "fs";
 import authRoutes from "./routes/auth.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import transactionRoutes from './routes/transaction.routes.js'
+import customerRoutes from "./routes/customer.routes.js"; 
+import invoiceRoutes from "./routes/invoice.routes.js";
 
 // Initialize DB (keeps your drizzle/sqlite setup alive)
 import "./db/index.js";
@@ -43,6 +45,8 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/customers", customerRoutes);    
+app.use("/api/invoices", invoiceRoutes);
 
 // ---------- Vite Middleware (DEV) ----------
 if (process.env.NODE_ENV !== "production") {

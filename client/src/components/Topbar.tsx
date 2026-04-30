@@ -53,21 +53,7 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
           />
         </div>
 
-        {/* Settings */}
-        <button className="w-[40px] lg:w-[50px] h-[40px] lg:h-[50px] rounded-full bg-[#f5f7fa] flex items-center justify-center">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path
-              d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z"
-              stroke="#718EBF"
-              strokeWidth="1.5"
-            />
-            <path
-              d="M16.25 10C16.25 9.375 16.875 8.75 17.5 8.75C18.125 8.75 18.75 8.125 18.75 7.5V6.25C18.75 5.625 18.125 5 17.5 5C16.875 5 16.25 4.375 16.25 3.75"
-              stroke="#718EBF"
-              strokeWidth="1.5"
-            />
-          </svg>
-        </button>
+       
 
         {/* Notifications */}
         <div className="relative">

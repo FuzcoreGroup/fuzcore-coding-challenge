@@ -36,6 +36,8 @@ export const customers = sqliteTable('customers', {
   address: text('address'),
   company: text('company'),
   taxId: text('tax_id'),
+  status: text('status').default('Active'),    // 'Active' or 'Inactive'
+  balance: real('balance').default(0),         // number
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
@@ -45,7 +47,7 @@ export const transactions = sqliteTable('transactions', {
   id: text('id').primaryKey().$defaultFn(uuid),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   categoryId: text('category_id').references(() => categories.id, { onDelete: 'set null' }),
-  amount: real('amount').notNull(),                // changed from text to real
+  amount: real('amount').notNull(),                
   type: text('type').notNull(),                    // 'income' or 'expense'
   description: text('description'),
   date: integer('date', { mode: 'timestamp' }).$defaultFn(() => new Date()),
@@ -54,7 +56,7 @@ export const transactions = sqliteTable('transactions', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
-// Invoices table – numeric fields already partly real, ensure subtotal, tax, discount are real
+// Invoices table
 export const invoices = sqliteTable('invoices', {
   id: text('id').primaryKey().$defaultFn(uuid),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -62,9 +64,9 @@ export const invoices = sqliteTable('invoices', {
   invoiceNumber: text('invoice_number').notNull().unique(),
   status: text('status').notNull().default('draft'),
   totalAmount: real('total_amount').notNull(),
-  subtotal: real('subtotal'),                     // changed from text to real
-  tax: real('tax'),                               // changed from text to real
-  discount: real('discount'),                     // changed from text to real
+  subtotal: real('subtotal'),
+  tax: real('tax'),
+  discount: real('discount'),
   notes: text('notes'),
   terms: text('terms'),
   issuedDate: integer('issued_date', { mode: 'timestamp' }).$defaultFn(() => new Date()),
@@ -74,14 +76,14 @@ export const invoices = sqliteTable('invoices', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
-// Invoice items table – quantity, price, total changed to real
+// Invoice items table 
 export const invoiceItems = sqliteTable('invoice_items', {
   id: text('id').primaryKey().$defaultFn(uuid),
   invoiceId: text('invoice_id').notNull().references(() => invoices.id, { onDelete: 'cascade' }),
   description: text('description').notNull(),
-  quantity: real('quantity').notNull(),           // changed from text to real
-  price: real('price').notNull(),                 // changed from text to real
-  total: real('total').notNull(),                 // changed from text to real
+  quantity: real('quantity').notNull(),
+  price: real('price').notNull(),
+  total: real('total').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { AppLayout } from '@/components/AppLayout';
-import { useCustomers, Customer } from '@/contexts/CustomerContext';
-import { AddEditCustomerModal } from '@/components/AddEditCustomerModal';
-import { DeleteConfirmationModal } from '@/components/DeleteConfirmationModal';
-import { useToast } from '@/contexts/ToastContext';
+import { AppLayout } from '../../components/AppLayout';
+import { useCustomers, Customer } from '../../contexts/CustomerContext';
+import { AddEditCustomerModal } from '../../components/AddEditCustomerModal';
+import { DeleteConfirmationModal } from '../../components/DeleteConfirmationModal';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function Customers() {
   const { customers, loading, deleteCustomer } = useCustomers();

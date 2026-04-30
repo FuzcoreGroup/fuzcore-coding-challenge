@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppLayout } from '../../components/AppLayout';
 import { useInvoices, Invoice, InvoiceStatus, InvoiceLineItem } from '../../contexts/InvoiceContext';
 import { useCustomers } from '../../contexts/CustomerContext';
@@ -27,7 +27,7 @@ function EditInvoiceModal({ isOpen, onClose, invoice }: EditInvoiceModalProps) {
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([]);
 
   // Populate form when invoice changes
-  useState(() => {
+ useEffect(() => {
     if (invoice) {
       setCustomerId(invoice.customerId);
       setStatus(invoice.status);
@@ -228,86 +228,86 @@ export default function Invoices() {
           ) : (
             <div className="space-y-4">
               {invoices.map((invoice) => (
-              <div key={invoice.id} className="border border-[#dfeaf2] rounded-[15px] p-4 hover:border-[#2d60ff] transition-all">
-                <div className="flex items-center justify-between">
-                  {/* Left side – clickable area to view details */}
-                  <button onClick={() => handleViewInvoice(invoice)} className="flex-1 text-left">
-                    <div className="flex items-center gap-4">
-                      <div className="w-[50px] h-[50px] rounded-full bg-[#f5f7fa] flex items-center justify-center">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <rect x="4" y="4" width="16" height="16" rx="2" stroke="#2D60FF" strokeWidth="2" />
-                          <path d="M8 10H16M8 14H12" stroke="#2D60FF" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
+                <div key={invoice.id} className="border border-[#dfeaf2] rounded-[15px] p-4 hover:border-[#2d60ff] transition-all">
+                  <div className="flex items-center justify-between">
+                    {/* Left side – clickable area to view details */}
+                    <button onClick={() => handleViewInvoice(invoice)} className="flex-1 text-left">
+                      <div className="flex items-center gap-4">
+                        <div className="w-[50px] h-[50px] rounded-full bg-[#f5f7fa] flex items-center justify-center">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <rect x="4" y="4" width="16" height="16" rx="2" stroke="#2D60FF" strokeWidth="2" />
+                            <path d="M8 10H16M8 14H12" stroke="#2D60FF" strokeWidth="2" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-medium text-[16px] text-[#343c6a]">Invoice #{invoice.id}</p>
+                          <p className="text-[14px] text-[#718ebf]">{invoice.customerName}</p>
+                          <p className="text-[12px] text-[#8ba3cb]">{formatDate(invoice.date)}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-[16px] text-[#343c6a]">Invoice #{invoice.id}</p>
-                        <p className="text-[14px] text-[#718ebf]">{invoice.customerName}</p>
-                        <p className="text-[12px] text-[#8ba3cb]">{formatDate(invoice.date)}</p>
-                      </div>
-                    </div>
-                  </button>
+                    </button>
 
-                  {/* Right side – amount, status, and action icons */}
-                  <div className="text-right flex flex-col items-end gap-2">
-                    <p className="font-medium text-[16px] text-[#343c6a]">${invoice.total.toLocaleString()}</p>
-                    <span className={`px-3 py-1 rounded-full text-[12px] font-medium ${getStatusColor(invoice.status)}`}>
-                      {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                    </span>
-                    <div className="flex gap-2 mt-1">
-                      {/* View icon (always visible) */}
-                      <button
-                        onClick={() => handleViewInvoice(invoice)}
-                        className="w-8 h-8 rounded-lg bg-[#e7edff] text-[#2d60ff] hover:bg-[#2d60ff] hover:text-white flex items-center justify-center transition-colors"
-                        title="View Invoice"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </button>
-
-                      {/* Edit icon – only for draft */}
-                      {invoice.status === 'draft' && (
+                    {/* Right side – amount, status, and action icons */}
+                    <div className="text-right flex flex-col items-end gap-2">
+                      <p className="font-medium text-[16px] text-[#343c6a]">${invoice.total.toLocaleString()}</p>
+                      <span className={`px-3 py-1 rounded-full text-[12px] font-medium ${getStatusColor(invoice.status)}`}>
+                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                      </span>
+                      <div className="flex gap-2 mt-1">
+                        {/* View icon (always visible) */}
                         <button
-                          onClick={() => handleEditInvoice(invoice)}
+                          onClick={() => handleViewInvoice(invoice)}
                           className="w-8 h-8 rounded-lg bg-[#e7edff] text-[#2d60ff] hover:bg-[#2d60ff] hover:text-white flex items-center justify-center transition-colors"
-                          title="Edit Invoice"
+                          title="View Invoice"
                         >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path
-                              d="M11.3333 2.00004C11.5084 1.82494 11.7163 1.68605 11.9451 1.59129C12.1739 1.49653 12.4191 1.44775 12.6666 1.44775C12.9142 1.44775 13.1594 1.49653 13.3882 1.59129C13.617 1.68605 13.8249 1.82494 14 2.00004C14.1751 2.17513 14.314 2.383 14.4088 2.61182C14.5035 2.84063 14.5523 3.08584 14.5523 3.33337C14.5523 3.5809 14.5035 3.82611 14.4088 4.05493C14.314 4.28374 14.1751 4.49161 14 4.66671L5.00001 13.6667L1.33334 14.6667L2.33334 11L11.3333 2.00004Z"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
                           </svg>
                         </button>
-                      )}
 
-                      {/* Delete icon – only for draft */}
-                      {invoice.status === 'draft' && (
-                        <button
-                          onClick={() => handleDeleteInvoice(invoice)}
-                          className="w-8 h-8 rounded-lg bg-[#ffe0eb] text-[#fe5c73] hover:bg-[#fe5c73] hover:text-white flex items-center justify-center transition-colors"
-                          title="Delete Invoice"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path
-                              d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.31304 5.47381 1.97391 5.72386 1.72386C5.97391 1.47381 6.31304 1.33333 6.66667 1.33333H9.33333C9.68696 1.33333 10.0261 1.47381 10.2761 1.72386C10.5262 1.97391 10.6667 2.31304 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.687 12.5262 14.0261 12.2761 14.2761C12.0261 14.5262 11.687 14.6667 11.3333 14.6667H4.66667C4.31304 14.6667 3.97391 14.5262 3.72386 14.2761C3.47381 14.0261 3.33333 13.687 3.33333 13.3333V4H12.6667Z"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </button>
-                      )}
+                        {/* Edit icon – only for draft */}
+                        {invoice.status === 'draft' && (
+                          <button
+                            onClick={() => handleEditInvoice(invoice)}
+                            className="w-8 h-8 rounded-lg bg-[#e7edff] text-[#2d60ff] hover:bg-[#2d60ff] hover:text-white flex items-center justify-center transition-colors"
+                            title="Edit Invoice"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path
+                                d="M11.3333 2.00004C11.5084 1.82494 11.7163 1.68605 11.9451 1.59129C12.1739 1.49653 12.4191 1.44775 12.6666 1.44775C12.9142 1.44775 13.1594 1.49653 13.3882 1.59129C13.617 1.68605 13.8249 1.82494 14 2.00004C14.1751 2.17513 14.314 2.383 14.4088 2.61182C14.5035 2.84063 14.5523 3.08584 14.5523 3.33337C14.5523 3.5809 14.5035 3.82611 14.4088 4.05493C14.314 4.28374 14.1751 4.49161 14 4.66671L5.00001 13.6667L1.33334 14.6667L2.33334 11L11.3333 2.00004Z"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                        )}
+
+                        {/* Delete icon – only for draft */}
+                        {invoice.status === 'draft' && (
+                          <button
+                            onClick={() => handleDeleteInvoice(invoice)}
+                            className="w-8 h-8 rounded-lg bg-[#ffe0eb] text-[#fe5c73] hover:bg-[#fe5c73] hover:text-white flex items-center justify-center transition-colors"
+                            title="Delete Invoice"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path
+                                d="M2 4H3.33333H14M5.33333 4V2.66667C5.33333 2.31304 5.47381 1.97391 5.72386 1.72386C5.97391 1.47381 6.31304 1.33333 6.66667 1.33333H9.33333C9.68696 1.33333 10.0261 1.47381 10.2761 1.72386C10.5262 1.97391 10.6667 2.31304 10.6667 2.66667V4M12.6667 4V13.3333C12.6667 13.687 12.5262 14.0261 12.2761 14.2761C12.0261 14.5262 11.687 14.6667 11.3333 14.6667H4.66667C4.31304 14.6667 3.97391 14.5262 3.72386 14.2761C3.47381 14.0261 3.33333 13.687 3.33333 13.3333V4H12.6667Z"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
             </div>
           )}
         </div>

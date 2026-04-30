@@ -34,7 +34,6 @@ interface InvoiceContextType {
   deleteInvoice: (id: string) => Promise<void>;
   getInvoice: (id: string) => Invoice | undefined;
   updateInvoiceStatus: (id: string, status: InvoiceStatus) => Promise<void>;
-  sendInvoiceEmail: (id: string, email: string) => Promise<void>;
   refreshInvoices: () => Promise<void>;
 }
 
@@ -84,7 +83,7 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
       let data;
       try { data = JSON.parse(text); } catch { throw new Error('Invalid response'); }
       if (!res.ok) throw new Error(data.message || 'Failed to create invoice');
-      setInvoices(prev => [data, ...prev]); // newest on top
+      setInvoices(prev => [data, ...prev]);
     } catch (err) {
       throw err;
     } finally {
@@ -157,29 +156,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const sendInvoiceEmail = async (id: string, email: string) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/${id}/send-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ email }),
-      });
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch { throw new Error('Invalid response'); }
-      if (!res.ok) throw new Error(data.message || 'Failed to send email');
-      return data;
-    } catch (err) {
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const getInvoice = (id: string) => invoices.find(inv => inv.id === id);
   const refreshInvoices = () => fetchInvoices();
 
@@ -193,7 +169,6 @@ export function InvoiceProvider({ children }: { children: ReactNode }) {
         deleteInvoice,
         getInvoice,
         updateInvoiceStatus,
-        sendInvoiceEmail,
         refreshInvoices,
       }}
     >

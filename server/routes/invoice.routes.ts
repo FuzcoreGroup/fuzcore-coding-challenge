@@ -5,7 +5,7 @@ import {
   updateInvoice,
   updateInvoiceStatus,
   deleteInvoice,
-  sendInvoiceEmail,
+
 } from '../controllers/invoice.controller.js';
 import { authenticateToken } from '../middleware/auth.middleware.js';
 
@@ -17,6 +17,6 @@ router.post('/', createInvoice);
 router.put('/:id', updateInvoice);
 router.patch('/:id/status', updateInvoiceStatus);
 router.delete('/:id', deleteInvoice);
-router.post('/:id/send-email', sendInvoiceEmail);
+
 
 export default router;

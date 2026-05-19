@@ -16,6 +16,14 @@
 - Submit the 2 hour video to us in an email or through LinkedIn
 - If your submission does not include voice audio, it will be disqualified
 
+>[!TIP]
+>For the best chance of success, please clearly demonstrate the following:
+>
+>- Don't just READ the code, explain WHY we need the code; why do we need to hash passwords, for example?
+>- Speak CLEARLY and SLOWLY, use a dedicated MICROPHONE and remove BACKGROUND NOISE
+>- Show us your IDE and that you can use an AI coding agent; don't just use a browser chat bot
+>- Make your app UI look beautiful! Use Google Stitch if required; it's free!
+
 ---
 
 ## The Product

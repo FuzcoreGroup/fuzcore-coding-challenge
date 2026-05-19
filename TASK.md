@@ -22,7 +22,7 @@
 >- Don't just READ the code, explain WHY we need the code; why do we need to hash passwords, for example?
 >- Speak CLEARLY and SLOWLY, use a dedicated MICROPHONE and remove BACKGROUND NOISE
 >- Show us your IDE and that you can use an AI coding agent; don't just use a browser chat bot
->- Make your app UI look beautiful! Use Google Stitch if required; it's free!
+>- Make your app UI look BEAUTIFUL! Use Google Stitch if required; it's FREE!
 
 ---
 

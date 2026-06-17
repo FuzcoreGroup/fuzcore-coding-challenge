@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1777469885882,
+      "tag": "0000_daffy_alex_wilder",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1777484748403,
+      "tag": "0001_secret_living_lightning",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777488302432,
+      "tag": "0002_oval_wolfpack",
+      "breakpoints": true
+    }
+  ]
+}
